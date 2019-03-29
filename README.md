@@ -37,5 +37,7 @@ Many linguistic features varied by language but not necesarily by difficulty; ho
 ## Key Insights and Further Research
 
 > There is a relationship between linguistic features and language difficulty; however, languages are so diverse that what makes one language difficult is not what makes another language difficult.
+
 > Only 67 languages had difficulty ratings. It appears that this 67 is not representative of the world's languages (with some language familys overrepresented and others underrepresented). Only 5 of the languages had the highest difficulty rating. It would be interesting to investigate whether there are truly few languages of this difficulty level, or whether there are many difficult languages that are unrated.
+
 > It may be worthwhile exploring the interaction between several linguistic features, to see if certain combinations create a perfect storm for language difficulty. 
