@@ -13,6 +13,22 @@ This analysis will look at langauge difficulty for native English speakers and e
 
 2. Language difficulty ratings as determined by the Foreign Service for 67 frequently studied languages: https://www.state.gov/m/fsi/sls/c78549.htm The difficulty levels were derived from the expected time it would take a native English speaker to reach "Professional Working Proficiency" (a score of 3 in speaking and reading on the Interagency Language Roundtable scale). English will be added as "level 0" for a comparison point.
 
+#### Files in the repository:
+
+Datasets:
+- language_difficulties.csv	(Foreign Service language difficulty ratings)
+- language.csv (WALS data in wide format, with language family information)
+- wals-data.csv (WALS data in long format)
+
+Exploratory analysis:
+- language_difficulty_exploratory.html	
+- language_difficulty_exploratory.ipynb	
+
+Explanatory analysis:
+- language_difficulty_explanatory.html	
+- language_difficulty_explanatory.ipynb	
+- language_difficulty_explanatory.slides.html	
+
 ## Data Wrangling
 
 * The Foreign Service rating dataset required cleaning and tidying to align the language names with the WALS dataset and parse out the numerical values for duration of study and difficulty ratings.
