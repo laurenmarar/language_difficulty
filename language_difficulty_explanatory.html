@@ -11804,6 +11804,207 @@ div#notebook {
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">## Preliminary Wrangling</span>
+
+<span class="c1"># Import all packages and set plots to be embedded inline</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sb</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">BytesIO</span>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_columns&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_rows&#39;</span><span class="p">,</span> <span class="mi">1500</span><span class="p">)</span>
+
+<span class="c1">### Source 1a: Language Features - Long</span>
+
+<span class="c1"># Import the long version of the WALS dataset to be used for the analysis of language features.</span>
+<span class="n">features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\Admin\Google Drive\Udacity\data-viz-proj\wals-data.csv&#39;</span><span class="p">)</span>
+<span class="n">features</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+
+<span class="n">features_clean</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="c1"># Remove columns that aren&#39;t needed</span>
+<span class="n">features_clean</span> <span class="o">=</span> <span class="n">features_clean</span><span class="p">[[</span><span class="s1">&#39;Language_name&#39;</span><span class="p">,</span><span class="s1">&#39;Parameter_ID&#39;</span><span class="p">,</span><span class="s1">&#39;Parameter_name&#39;</span><span class="p">,</span><span class="s1">&#39;Value&#39;</span><span class="p">]]</span>
+
+<span class="c1">### Source 1b: Language Features - Wide</span>
+
+<span class="c1"># Import the wide verson of the World Atlas of Language Structures dataset. </span>
+<span class="c1"># With one row per language, this dataset also includes languages&#39; family. This dataset will be used to </span>
+<span class="c1">#   analyze data by language family.</span>
+<span class="n">lang_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\Admin\Google Drive\Udacity\data-viz-proj\language.csv&#39;</span><span class="p">)</span>
+<span class="n">lang_info</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+
+<span class="n">lang_info_clean</span> <span class="o">=</span> <span class="n">lang_info</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="n">lang_info_clean</span> <span class="o">=</span> <span class="n">lang_info_clean</span><span class="p">[[</span><span class="s1">&#39;Name&#39;</span><span class="p">,</span><span class="s1">&#39;genus&#39;</span><span class="p">,</span><span class="s1">&#39;family&#39;</span><span class="p">,</span><span class="s1">&#39;macroarea&#39;</span><span class="p">]]</span>
+
+<span class="c1">### Source 2: Language Difficulties</span>
+
+<span class="n">The</span> <span class="n">following</span> <span class="n">source</span> <span class="n">lists</span> <span class="mi">67</span> <span class="n">languages</span> <span class="n">ranked</span> <span class="n">by</span> <span class="n">the</span> <span class="n">difficulty</span> <span class="n">rating</span> <span class="n">assigned</span> <span class="n">by</span> <span class="n">the</span> <span class="n">Foreign</span> <span class="n">Service</span><span class="o">.</span> 
+
+<span class="n">The</span> <span class="n">language</span> <span class="n">difficulties</span> <span class="n">are</span> <span class="n">derived</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">expected</span> <span class="n">time</span> <span class="n">it</span> <span class="n">would</span> <span class="n">take</span> <span class="n">a</span> <span class="n">native</span> <span class="n">English</span> <span class="n">speaker</span> <span class="n">to</span> <span class="n">reach</span> <span class="s2">&quot;Professional Working Proficiency&quot;</span> <span class="p">(</span><span class="n">a</span> <span class="s2">&quot;score of &#39;Speaking-3/Reading-3&#39; on the Interagency Language Roundtable scale&quot;</span><span class="p">)</span><span class="o">.</span>
+
+<span class="o">&gt;</span> <span class="n">Category</span> <span class="n">I</span> 
+<span class="o">&gt;</span>
+<span class="o">&gt;</span> <span class="n">Category</span> <span class="n">II</span> 
+<span class="o">&gt;</span>
+<span class="o">&gt;</span> <span class="n">Category</span> <span class="n">III</span>
+<span class="o">&gt;</span>
+<span class="o">&gt;</span> <span class="n">Category</span> <span class="n">IV</span>
+
+<span class="n">English</span> <span class="n">will</span> <span class="n">be</span> <span class="n">added</span> <span class="k">as</span> <span class="s2">&quot;level 0&quot;</span> <span class="k">for</span> <span class="n">a</span> <span class="n">comparison</span> <span class="n">point</span><span class="o">.</span>
+
+<span class="c1"># Import the language difficulty dataset</span>
+<span class="n">levels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;C:\Users\Admin\Google Drive\Udacity\data-viz-proj\language_difficulties.csv&#39;</span><span class="p">)</span>
+
+<span class="n">levels_clean</span> <span class="o">=</span> <span class="n">levels</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="c1"># Coming from a webpage, this dataset will require a bit of tidying and cleaning </span>
+<span class="c1">#   before it will be ready to merge with the language structure datasets.</span>
+
+<span class="c1"># Isolate study time from language name. The time is also repeated in the difficulty column.</span>
+<span class="n">levels_clean</span><span class="p">[[</span><span class="s1">&#39;language&#39;</span><span class="p">,</span><span class="s1">&#39;study_weeks&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="p">[</span><span class="s1">&#39;language&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; \(&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;study_weeks&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="n">levels_clean</span><span class="p">[</span><span class="s1">&#39;study_weeks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="p">[</span><span class="s1">&#39;study_weeks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39; weeks)&#39;</span><span class="p">)</span>
+
+<span class="c1">#Isolate the Category from the difficulty column</span>
+<span class="n">levels_clean</span><span class="p">[[</span><span class="s1">&#39;difficulty&#39;</span><span class="p">,</span><span class="s1">&#39;duration&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="p">[</span><span class="s1">&#39;difficulty&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;: &#39;</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="c1">#Examine the range of times</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="c1"># Hours and weeks are redundant (both reflecting the same ratio between levels). Parse out weeks for analysis.</span>
+<span class="n">levels_clean</span><span class="p">[[</span><span class="s1">&#39;study_weeks_2&#39;</span><span class="p">,</span><span class="s1">&#39;study_hours&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;weeks&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">study_weeks_2</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="o">.</span><span class="n">study_weeks_2</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;(\d+)&#39;</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">tail</span><span class="p">()</span>
+
+<span class="c1"># Coalesce study_weeks and study_weeks_2. For Category I Languages, keep study_weeks as it </span>
+<span class="c1">#  specified the hours within the 24-30 range, whereas study_weeks_2 selected the minimum number in the range.</span>
+<span class="n">levels_clean</span><span class="p">[</span><span class="s1">&#39;weeks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="o">.</span><span class="n">study_weeks</span><span class="o">.</span><span class="n">combine_first</span><span class="p">(</span><span class="n">levels_clean</span><span class="o">.</span><span class="n">study_weeks_2</span><span class="p">)</span>
+<span class="c1"># Reference: https://stackoverflow.com/questions/38152389/coalesce-values-from-2-columns-into-a-single-column-in-a-pandas-dataframe</span>
+
+<span class="c1">#Correct hours for French is under weeks.</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;language==&quot;French&quot;&#39;</span><span class="p">)</span>
+
+<span class="c1">#Drop excess columns. We can remove study_hours as well as the difference in hours between each category is the same ratio as the difference in weeks.</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;study_weeks&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;study_weeks_2&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;study_hours&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+
+<span class="c1"># Convert weeks data type to integer so that it can be used as a numerical variable.</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">weeks</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="o">.</span><span class="n">weeks</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;difficulty&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">difficulty</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="o">.</span><span class="n">difficulty</span><span class="o">.</span><span class="n">replace</span><span class="p">({</span><span class="s1">&#39;Category I Languages&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+                                                          <span class="s1">&#39;Category II Languages&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+                                                          <span class="s1">&#39;Category III Languages&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span>
+                                                          <span class="s1">&#39;Category IV Languages&#39;</span><span class="p">:</span><span class="mi">4</span><span class="p">})</span>
+
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;difficulty&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="c1"># Assign value of 0 to English</span>
+<span class="n">add_eng</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;language&#39;</span><span class="p">:[</span><span class="s1">&#39;English&#39;</span><span class="p">],</span>
+          <span class="s1">&#39;difficulty&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+          <span class="s1">&#39;weeks&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+
+<span class="n">eng_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">add_eng</span><span class="p">)</span>
+
+<span class="n">levels_clean</span> <span class="o">=</span> <span class="n">levels_clean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eng_df</span><span class="p">)</span>
+<span class="n">levels_clean</span><span class="o">.</span><span class="n">tail</span><span class="p">()</span>
+
+<span class="c1">### Merge `features_clean` and `levels_clean`</span>
+
+<span class="c1"># Identify languages that did not merge due to different naming conventions</span>
+<span class="n">lang_merge</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">levels_clean</span><span class="p">,</span> <span class="n">features_clean</span><span class="p">,</span>
+                     <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;language&#39;</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s1">&#39;Language_name&#39;</span><span class="p">,</span>
+                     <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;_level&#39;</span><span class="p">,</span><span class="s1">&#39;_feat&#39;</span><span class="p">),</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">lang_merge</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;_merge&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="n">lang_merge</span><span class="p">[</span><span class="s1">&#39;language&#39;</span><span class="p">][</span><span class="n">lang_merge</span><span class="p">[</span><span class="s1">&#39;_merge&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;left_only&#39;</span><span class="p">]</span>
+
+<span class="n">features_clean</span><span class="p">[</span><span class="s1">&#39;lang_alias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">features_clean</span><span class="p">[</span><span class="s1">&#39;Language_name&#39;</span><span class="p">]</span>
+
+<span class="n">As</span> <span class="n">the</span> <span class="n">Foreign</span> <span class="n">Service</span> <span class="nb">list</span> <span class="n">did</span> <span class="ow">not</span> <span class="n">include</span> <span class="n">standard</span> <span class="n">language</span> <span class="n">codes</span><span class="p">,</span> <span class="n">I</span> <span class="n">visually</span> <span class="n">mapped</span> <span class="n">the</span> <span class="n">languages</span> <span class="n">whose</span> <span class="n">names</span> <span class="n">did</span> <span class="ow">not</span> <span class="n">match</span> <span class="n">the</span> <span class="n">WALS</span> <span class="n">dataset</span><span class="o">.</span> <span class="n">Only</span> <span class="n">a</span> <span class="n">few</span> <span class="n">languages</span> <span class="n">did</span> <span class="ow">not</span> <span class="n">have</span> <span class="n">a</span> <span class="n">one</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">one</span> <span class="n">match</span><span class="o">.</span> <span class="n">Here</span> <span class="n">was</span> <span class="n">the</span> <span class="n">general</span> <span class="n">decision</span><span class="o">-</span><span class="n">making</span> <span class="n">process</span> <span class="k">for</span> <span class="n">matching</span> <span class="n">the</span> <span class="n">languages</span><span class="p">:</span>
+<span class="o">*</span> <span class="n">Arabic</span> <span class="o">-</span> <span class="n">WALS</span> <span class="n">includes</span> <span class="n">numerous</span> <span class="n">Arabic</span> <span class="n">dialects</span> <span class="k">as</span> <span class="n">well</span> <span class="k">as</span> <span class="n">Modern</span> <span class="n">Standards</span> <span class="n">Arabic</span><span class="o">.</span> <span class="n">I</span> <span class="n">mapped</span> <span class="n">to</span> <span class="n">Modern</span> <span class="n">Standard</span> <span class="ow">and</span> <span class="n">one</span> <span class="n">dialect</span> <span class="p">(</span><span class="n">Egyptian</span><span class="p">,</span> <span class="k">as</span> <span class="n">it</span> <span class="n">had</span> <span class="n">the</span> <span class="n">most</span> <span class="n">data</span> <span class="ow">and</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">widely</span> <span class="n">known</span> <span class="n">dialect</span><span class="p">)</span><span class="o">.</span>
+<span class="o">*</span> <span class="n">Mongolian</span> <span class="o">-</span> <span class="n">WALS</span> <span class="n">has</span> <span class="n">several</span> <span class="n">Mongolic</span> <span class="n">languages</span><span class="o">.</span> <span class="n">I</span> <span class="n">mapped</span> <span class="n">to</span> <span class="n">Khalkha</span><span class="p">,</span> <span class="n">which</span> <span class="n">according</span> <span class="n">to</span> <span class="n">Wikipedia</span><span class="p">,</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">most</span> <span class="n">strongly</span> <span class="n">associted</span> <span class="k">with</span> <span class="n">the</span> <span class="n">country</span> <span class="n">of</span> <span class="n">Mongolia</span><span class="o">.</span>
+
+<span class="n">features_clean</span><span class="o">.</span><span class="n">lang_alias</span> <span class="o">=</span> <span class="n">features_clean</span><span class="o">.</span><span class="n">lang_alias</span><span class="o">.</span><span class="n">replace</span><span class="p">({</span><span class="s1">&#39;Hebrew (Modern)&#39;</span><span class="p">:</span><span class="s1">&#39;Hebrew&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Kurdish (Central)&#39;</span><span class="p">:</span><span class="s1">&#39;Kurdish&#39;</span><span class="p">,</span> 
+                                                                 <span class="s1">&#39;Khalkha&#39;</span><span class="p">:</span><span class="s1">&#39;Mongolian&#39;</span><span class="p">,</span>                                                     
+                                                                 <span class="s1">&#39;Persian&#39;</span><span class="p">:</span><span class="s1">&#39;Farsi&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Greek (Modern)&#39;</span><span class="p">:</span><span class="s1">&#39;Greek&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Kirghiz&#39;</span><span class="p">:</span><span class="s1">&#39;Kyrgyz&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Serbian-Croatian&#39;</span><span class="p">:</span><span class="s1">&#39;Serbo-Croatian&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Slovene&#39;</span><span class="p">:</span><span class="s1">&#39;Slovenian&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Tajik&#39;</span><span class="p">:</span><span class="s1">&#39;Tajiki&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Armenian (Eastern)&#39;</span><span class="p">:</span><span class="s1">&#39;Armenian&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Tibetan (Standard Spoken)&#39;</span><span class="p">:</span><span class="s1">&#39;Tibetan&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Arabic (Egyptian)&#39;</span><span class="p">:</span><span class="s1">&#39;Arabic&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Arabic (Modern Standard)&#39;</span><span class="p">:</span><span class="s1">&#39;Arabic&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Cantonese&#39;</span><span class="p">:</span><span class="s1">&#39;Chinese – Cantonese&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Mandarin&#39;</span><span class="p">:</span><span class="s1">&#39;Chinese – Mandarin&#39;</span><span class="p">})</span>
+
+<span class="n">lang_merge</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">levels_clean</span><span class="p">,</span> <span class="n">features_clean</span><span class="p">,</span>
+                     <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;language&#39;</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s1">&#39;lang_alias&#39;</span><span class="p">,</span>
+                     <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;_level&#39;</span><span class="p">,</span><span class="s1">&#39;_feat&#39;</span><span class="p">),</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">lang_merge</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;_merge&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="c1"># Create dataset of langauges with difficulty rankings</span>
+<span class="n">lang_merge</span> <span class="o">=</span> <span class="n">lang_merge</span><span class="p">[[</span><span class="s1">&#39;language&#39;</span><span class="p">,</span><span class="s1">&#39;difficulty&#39;</span><span class="p">,</span><span class="s1">&#39;Parameter_ID&#39;</span><span class="p">,</span><span class="s1">&#39;Value&#39;</span><span class="p">]]</span>
+<span class="n">lang_train</span> <span class="o">=</span> <span class="n">lang_merge</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;difficulty&#39;</span><span class="p">])</span>
+<span class="n">lang_train</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+
+<span class="c1">### Merge `levels_clean` and `structure_clean`</span>
+
+<span class="n">lang_info_clean</span><span class="p">[</span><span class="s1">&#39;lang_alias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lang_info_clean</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span>
+
+<span class="n">lang_info_clean</span><span class="o">.</span><span class="n">lang_alias</span> <span class="o">=</span> <span class="n">lang_info_clean</span><span class="o">.</span><span class="n">lang_alias</span><span class="o">.</span><span class="n">replace</span><span class="p">({</span><span class="s1">&#39;Hebrew (Modern)&#39;</span><span class="p">:</span><span class="s1">&#39;Hebrew&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Kurdish (Central)&#39;</span><span class="p">:</span><span class="s1">&#39;Kurdish&#39;</span><span class="p">,</span> 
+                                                                 <span class="s1">&#39;Khalkha&#39;</span><span class="p">:</span><span class="s1">&#39;Mongolian&#39;</span><span class="p">,</span>                                                     
+                                                                 <span class="s1">&#39;Persian&#39;</span><span class="p">:</span><span class="s1">&#39;Farsi&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Greek (Modern)&#39;</span><span class="p">:</span><span class="s1">&#39;Greek&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Kirghiz&#39;</span><span class="p">:</span><span class="s1">&#39;Kyrgyz&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Serbian-Croatian&#39;</span><span class="p">:</span><span class="s1">&#39;Serbo-Croatian&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Slovene&#39;</span><span class="p">:</span><span class="s1">&#39;Slovenian&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Tajik&#39;</span><span class="p">:</span><span class="s1">&#39;Tajiki&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Armenian (Eastern)&#39;</span><span class="p">:</span><span class="s1">&#39;Armenian&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Tibetan (Standard Spoken)&#39;</span><span class="p">:</span><span class="s1">&#39;Tibetan&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Arabic (Egyptian)&#39;</span><span class="p">:</span><span class="s1">&#39;Arabic&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Arabic (Modern Standard)&#39;</span><span class="p">:</span><span class="s1">&#39;Arabic&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Cantonese&#39;</span><span class="p">:</span><span class="s1">&#39;Chinese – Cantonese&#39;</span><span class="p">,</span>
+                                                                 <span class="s1">&#39;Mandarin&#39;</span><span class="p">:</span><span class="s1">&#39;Chinese – Mandarin&#39;</span><span class="p">})</span>
+
+<span class="n">lang_levels_merge</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">levels_clean</span><span class="p">,</span> <span class="n">lang_info_clean</span><span class="p">,</span>
+                     <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;language&#39;</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s1">&#39;lang_alias&#39;</span><span class="p">,</span>
+                     <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;_level&#39;</span><span class="p">,</span><span class="s1">&#39;_struct&#39;</span><span class="p">),</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">lang_levels_merge</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;_merge&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div>
 <div class="inner_cell">
@@ -11817,7 +12018,9 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[365]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">order</span> <span class="o">=</span> <span class="n">features_clean</span><span class="p">[</span><span class="s1">&#39;Parameter_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">base_color</span> <span class="o">=</span> <span class="n">sb</span><span class="o">.</span><span class="n">color_palette</span><span class="p">(</span><span class="s1">&#39;PuBu&#39;</span><span class="p">)[</span><span class="mi">4</span><span class="p">]</span>
+
+<span class="n">order</span> <span class="o">=</span> <span class="n">features_clean</span><span class="p">[</span><span class="s1">&#39;Parameter_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 
 <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
